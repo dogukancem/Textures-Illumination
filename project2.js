@@ -7,7 +7,7 @@
 
 
 function GetModelViewProjection(projectionMatrix, translationX, translationY, translationZ, rotationX, rotationY) {
-	
+
 	var trans1 = [
 		1, 0, 0, 0,
 		0, 1, 0, 0,
@@ -63,7 +63,7 @@ class MeshDrawer {
 		/**
 		 * @Task2 : You should initialize the required variables for lighting here
 		 */
-		
+
 	}
 
 	setMesh(vertPos, texCoords, normalCoords) {
@@ -133,6 +133,9 @@ class MeshDrawer {
 			/**
 			 * @Task1 : You should implement this part to accept non power of 2 sized textures
 			 */
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 		}
 
 		gl.useProgram(this.prog);
@@ -153,7 +156,7 @@ class MeshDrawer {
 		 * @Task2 : You should implement the lighting and implement this function
 		 */
 	}
-	
+
 	setAmbientLight(ambient) {
 		console.error("Task 2: You should implement the lighting and implement this function ");
 		/**

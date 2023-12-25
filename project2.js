@@ -63,6 +63,7 @@ class MeshDrawer {
 		/**
 		 * @Task2 : You should initialize the required variables for lighting here
 		 */
+		this.normLoc = gl.getAttribLocation(this.prog, 'normal');
 		this.lightPosLoc = gl.getUniformLocation(this.prog, 'lightPos');
 		this.ambientLoc = gl.getUniformLocation(this.prog, 'ambient');
 		this.enableLightingLoc = gl.getUniformLocation(this.prog, 'enableLighting');
@@ -107,16 +108,17 @@ class MeshDrawer {
 		 * @Task2 : You should update this function to handle the lighting
 		 */
 
-		gl.uniform3fv(this.lightPosLoc, [lightX, lightY, 1.0]);
 
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-		gl.enableVertexAttribArray(this.normLoc);
-		gl.vertexAttribPointer(this.normLoc, 3, gl.FLOAT, false, 0, 0);
 		///////////////////////////////
-
+		if (this.normalBuffer) {
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+			gl.enableVertexAttribArray(this.normLoc);
+			gl.vertexAttribPointer(this.normLoc, 3, gl.FLOAT, false, 0, 0);
+		}
 
 		updateLightPos();
+		gl.uniform3fv(this.lightPosLoc, [lightX, lightY, lightZ]);
+
 		gl.drawArrays(gl.TRIANGLES, 0, this.numTriangles);
 
 
@@ -145,10 +147,9 @@ class MeshDrawer {
 			/**
 			 * @Task1 : You should implement this part to accept non power of 2 sized textures
 			 */
-			//gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 		}
 
 		gl.useProgram(this.prog);
@@ -238,15 +239,16 @@ const meshFS = `
 
 			void main()
 			{
+				vec4 texColor = texture2D(tex, v_texCoord);
+				vec3 norm = normalize(v_normal);
+				vec3 lightDirection = normalize(lightPos);
+				float diff = max(dot(norm, lightDirection), 0.0);
+				vec3 diffuse = diff * texColor.rgb;
+				vec3 ambientColor = ambient * texColor.rgb;
+
 				if(showTex && enableLighting){
 					// UPDATE THIS PART TO HANDLE LIGHTING
-					vec3 norm = normalize(v_normal);
-        	vec3 lightDir = normalize(lightPos - gl_FragCoord.xyz);
-        	float diff = max(dot(norm, lightDir), 0.0);
-        	vec3 diffuse = diff * texture2D(tex, v_texCoord).rgb;
-        	vec3 ambientColor = ambient * texture2D(tex, v_texCoord).rgb;
-        	gl_FragColor = vec4(diffuse + ambientColor, texture2D(tex, v_texCoord));
-					
+					gl_FragColor = vec4(diffuse + ambientColor, texColor);
 				}
 				else if(showTex){
 					gl_FragColor = texture2D(tex, v_texCoord);
@@ -257,8 +259,9 @@ const meshFS = `
 			}`;
 
 // Light direction parameters for Task 2
-var lightX = 1;
-var lightY = 1;
+var lightX = 1.0;
+var lightY = 1.0;
+var lightZ = 1.0;
 
 const keys = {};
 function updateLightPos() {
@@ -267,5 +270,7 @@ function updateLightPos() {
 	if (keys['ArrowDown']) lightY += translationSpeed;
 	if (keys['ArrowRight']) lightX -= translationSpeed;
 	if (keys['ArrowLeft']) lightX += translationSpeed;
+
+	console.log(`Light position: (${lightX}, ${lightY})`);
 }
 ///////////////////////////////////////////////////////////////////////////////////
